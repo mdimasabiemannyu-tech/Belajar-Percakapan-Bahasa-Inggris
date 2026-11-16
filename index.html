@@ -299,6 +299,29 @@ select {
   margin-top:22px;
 }
 
+.typing-dots {
+  display:inline-flex;
+  gap:4px;
+  margin-left:5px;
+  vertical-align:middle;
+}
+
+.typing-dots span {
+  width:5px;
+  height:5px;
+  background:var(--cyan);
+  border-radius:50%;
+  animation:typing 1s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) { animation-delay:.15s; }
+.typing-dots span:nth-child(3) { animation-delay:.3s; }
+
+@keyframes typing {
+  0%,60%,100% { transform:translateY(0); opacity:.4; }
+  30% { transform:translateY(-5px); opacity:1; }
+}
+
 @media(max-width:760px) {
   .layout { grid-template-columns:1fr; }
   .chat { min-height:65vh; }
@@ -488,8 +511,7 @@ select {
     $('sendBtn').disabled = value;
     $('startBtn').disabled = value;
     $('helpBtn').disabled = value;
-
-    $('sendBtn').textContent = value ? 'Tunggu...' : 'Kirim';
+    $('sendBtn').textContent = value ? 'Mengirim...' : 'Kirim';
   }
 
   function addMessage(role, english, indo = '', correction = '') {
@@ -500,7 +522,9 @@ select {
 
     const who = document.createElement('div');
     who.className = 'who';
-    who.textContent = role === 'You' ? 'YOU · KAMU' : 'AI ENGLISH PARTNER';
+    who.textContent = role === 'You'
+      ? 'YOU · KAMU'
+      : 'AI ENGLISH PARTNER';
 
     const en = document.createElement('div');
     en.textContent = english || '';
@@ -523,6 +547,8 @@ select {
 
     messages.append(node);
     messages.scrollTop = messages.scrollHeight;
+
+    return node;
   }
 
   function showWelcome(text) {
@@ -536,8 +562,9 @@ select {
     messages.append(welcome);
   }
 
-  async function translate(text) {
-    if (!text) return '';
+  // Terjemahan pengguna berjalan di belakang
+  async function translateInBackground(text, node) {
+    if (!text || $('translation').value !== 'yes') return;
 
     try {
       const url =
@@ -547,14 +574,25 @@ select {
 
       const response = await fetch(url);
 
-      if (!response.ok) return '';
+      if (!response.ok) return;
 
       const data = await response.json();
-      return data.responseData?.translatedText || '';
+      const translated = data.responseData?.translatedText;
+
+      if (translated && node.isConnected) {
+        let tr = node.querySelector('.translation');
+
+        if (!tr) {
+          tr = document.createElement('div');
+          tr.className = 'translation';
+          node.append(tr);
+        }
+
+        tr.textContent = '🇮🇩 ' + translated;
+      }
 
     } catch (error) {
       console.warn('Terjemahan gagal:', error);
-      return '';
     }
   }
 
@@ -565,13 +603,13 @@ select {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = $('voice').value;
-    utterance.rate = 0.92;
+    utterance.rate = 0.95;
     utterance.pitch = 1;
 
     synth.speak(utterance);
   }
 
-  // FUNGSI GEMINI DENGAN PENANGANAN ERROR DAN TIMEOUT
+  // Mengirim pesan ke Gemini
   async function askGemini(message) {
     const controller = new AbortController();
 
@@ -586,8 +624,8 @@ select {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: message,
-          previousId: previousId,
+          message,
+          previousId,
           level: $('level').value,
           topic: $('topic').value
         }),
@@ -600,29 +638,23 @@ select {
 
       try {
         data = JSON.parse(responseText);
-      } catch (error) {
-        console.error('Respons server bukan JSON:', responseText);
+      } catch {
+        console.error('Respons server:', responseText);
 
         throw new Error(
-          `Server mengirim respons bukan JSON (HTTP ${response.status}). Periksa Logs Vercel.`
+          'Respons server tidak valid. HTTP ' + response.status
         );
       }
 
       if (!response.ok) {
         throw new Error(
-          data.error || `Server error HTTP ${response.status}`
+          data.error || 'Server error HTTP ' + response.status
         );
       }
 
-      if (!data.id) {
+      if (!data.id || !data.reply_en) {
         throw new Error(
-          'ID percakapan tidak ditemukan. Periksa backend api/chat.js.'
-        );
-      }
-
-      if (!data.reply_en) {
-        throw new Error(
-          'Gemini tidak memberikan jawaban bahasa Inggris.'
+          'Jawaban Gemini tidak lengkap. Periksa api/chat.js.'
         );
       }
 
@@ -632,7 +664,7 @@ select {
     } catch (error) {
       if (error.name === 'AbortError') {
         throw new Error(
-          'Permintaan melebihi 60 detik. Gemini atau server Vercel terlalu lambat.'
+          'Gemini belum menjawab dalam 60 detik. Coba lagi.'
         );
       }
 
@@ -641,6 +673,30 @@ select {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  // Indikator AI sedang mengetik
+  function showTyping() {
+    const node = document.createElement('div');
+    node.className = 'msg ai';
+    node.id = 'typingIndicator';
+
+    const who = document.createElement('div');
+    who.className = 'who';
+    who.textContent = 'AI ENGLISH PARTNER';
+
+    const text = document.createElement('div');
+    text.innerHTML =
+      'AI sedang mengetik' +
+      '<span class="typing-dots">' +
+      '<span></span><span></span><span></span>' +
+      '</span>';
+
+    node.append(who, text);
+    messages.append(node);
+    messages.scrollTop = messages.scrollHeight;
+
+    return node;
   }
 
   async function startSession() {
@@ -660,6 +716,8 @@ select {
 
     setStatus('Menghubungkan ke Gemini AI...');
 
+    const typing = showTyping();
+
     try {
       const data = await askGemini(
         'Start our English practice session. ' +
@@ -667,12 +725,12 @@ select {
         $('topic').value + '. ' +
         'Adapt your English to my ' +
         $('level').value +
-        ' level. ' +
-        'Keep your response short and natural. ' +
-        'Provide the Indonesian translation and a brief grammar correction only if needed.'
+        ' level. Keep your response short and natural. ' +
+        'Provide the Indonesian translation and a brief correction only if needed.'
       );
 
       sessionActive = true;
+      typing.remove();
 
       addMessage(
         'AI',
@@ -684,9 +742,10 @@ select {
       lastAiText = data.reply_en;
       speak(lastAiText);
 
-      setStatus('Sesi latihan aktif · Gemini AI terhubung');
+      setStatus('Sesi aktif · Silakan berbicara');
 
     } catch (error) {
+      typing.remove();
       sessionActive = false;
 
       showWelcome(
@@ -712,16 +771,20 @@ select {
     setBusy(true);
     synth?.cancel();
 
-    addMessage(
-      'You',
-      text,
-      await translate(text)
-    );
+    // Tampilkan pesan pengguna tanpa menunggu terjemahan
+    const userNode = addMessage('You', text);
 
-    setStatus('Gemini sedang menyusun jawaban...');
+    // Terjemahan berlangsung bersamaan dengan permintaan Gemini
+    translateInBackground(text, userNode);
+
+    const typing = showTyping();
+
+    setStatus('AI sedang memikirkan jawaban...');
 
     try {
       const data = await askGemini(text);
+
+      typing.remove();
 
       addMessage(
         'AI',
@@ -733,13 +796,15 @@ select {
       lastAiText = data.reply_en;
       speak(lastAiText);
 
-      setStatus('Sesi latihan aktif · Silakan lanjutkan');
+      setStatus('Sesi aktif · Silakan lanjutkan');
 
     } catch (error) {
+      typing.remove();
+
       addMessage(
         'AI',
         'Sorry, I cannot respond right now. Please try again.',
-        'Maaf, AI belum bisa menjawab sekarang. Silakan coba lagi.',
+        'Maaf, AI belum bisa menjawab sekarang.',
         error.message
       );
 
@@ -758,7 +823,7 @@ select {
 
     if (!SpeechRecognition) {
       alert(
-        'Browser belum mendukung Speech Recognition. Gunakan Google Chrome terbaru.'
+        'Gunakan Google Chrome terbaru untuk fitur mikrofon.'
       );
       return;
     }
@@ -774,7 +839,7 @@ select {
       listening = true;
       $('micBtn').classList.add('active');
       $('micBtn').textContent = '🔴';
-      setStatus('Mendengarkan... silakan berbicara');
+      setStatus('Mendengarkan...');
     };
 
     recognition.onresult = event => {
@@ -791,14 +856,6 @@ select {
       listening = false;
       $('micBtn').classList.remove('active');
       $('micBtn').textContent = '🎙️';
-
-      if (!busy) {
-        setStatus(
-          sessionActive
-            ? 'Sesi latihan aktif · Siap'
-            : 'Belum memulai sesi'
-        );
-      }
     };
 
     try {
