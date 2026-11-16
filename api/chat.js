@@ -21,10 +21,7 @@ export default async function handler(req, res) {
     topic = "Daily Conversation"
   } = req.body || {};
 
-  if (
-    typeof message !== "string" ||
-    !message.trim()
-  ) {
+  if (typeof message !== "string" || !message.trim()) {
     return res.status(400).json({
       error: "Pesan tidak boleh kosong."
     });
@@ -39,37 +36,56 @@ export default async function handler(req, res) {
   const systemInstruction = `
 You are Dimas English AI.
 
-You are a friendly English conversation tutor
+You are a friendly, patient English conversation tutor
 for Indonesian students.
 
-Student level: ${level}
-Conversation topic: ${topic}
+STUDENT LEVEL: ${level}
+CONVERSATION TOPIC: ${topic}
 
-RULES:
+YOUR RULES:
 
-1. Speak naturally like a real human conversation partner.
+1. Continue a natural, realistic conversation.
 2. Use English appropriate to the student's level.
 3. Remember the previous conversation.
 4. Answer the actual message.
 5. Ask only ONE relevant follow-up question.
-6. Translate your English response into natural Indonesian.
-7. Correct grammar mistakes gently.
-8. Explain corrections briefly in Indonesian.
-9. Keep answers short and conversational.
-10. Never repeat generic responses.
-11. Encourage the student.
-12. If the student asks for help, answer helpfully.
-13. Never translate the student's message yourself.
-14. Do not confuse the student's meaning.
+6. Translate the student's original message into natural Indonesian.
+7. Translate your English response into natural Indonesian.
+8. Correct grammar mistakes gently.
+9. Explain corrections briefly in Indonesian.
+10. Keep answers short and conversational.
+11. Never repeat generic responses.
+12. Encourage the student.
+13. If the student asks for help, answer helpfully.
+14. Preserve the actual meaning of the student's message.
 
-Return the three required fields exactly as specified
-by the JSON response schema.
+RESPONSE FIELDS:
+
+reply_en:
+Your English response to the student.
+
+translation_user_id:
+Natural Indonesian translation of the student's original message.
+
+translation_id:
+Natural Indonesian translation of your English response.
+
+correction_id:
+Brief grammar correction in Indonesian.
+If there is no grammar mistake, return an empty string.
+
+IMPORTANT:
+Return all four fields in valid JSON.
+Do not include Markdown or additional text.
 `;
 
   const responseSchema = {
     type: "OBJECT",
     properties: {
       reply_en: {
+        type: "STRING"
+      },
+      translation_user_id: {
         type: "STRING"
       },
       translation_id: {
@@ -81,11 +97,13 @@ by the JSON response schema.
     },
     required: [
       "reply_en",
+      "translation_user_id",
       "translation_id",
       "correction_id"
     ],
     propertyOrdering: [
       "reply_en",
+      "translation_user_id",
       "translation_id",
       "correction_id"
     ]
@@ -96,7 +114,7 @@ by the JSON response schema.
 
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 20000);
+    }, 30000);
 
     try {
       const payload = {
@@ -112,11 +130,14 @@ by the JSON response schema.
 
         generation_config: {
           thinking_level: "low",
-          max_output_tokens: 220
+          max_output_tokens: 350
         }
       };
 
-      if (previousId) {
+      if (
+        typeof previousId === "string" &&
+        previousId.trim()
+      ) {
         payload.previous_interaction_id = previousId;
       }
 
@@ -178,13 +199,13 @@ by the JSON response schema.
     }
 
     // MODEL CADANGAN
-    const retry =
+    const shouldRetry =
       !response ||
       [429, 500, 502, 503, 504].includes(
         response.status
       );
 
-    if (retry) {
+    if (shouldRetry) {
       console.log("Trying fallback model...");
 
       try {
@@ -206,7 +227,7 @@ by the JSON response schema.
         ).json({
           error:
             error.name === "AbortError"
-              ? "Kedua model Gemini terlalu lama merespons."
+              ? "Gemini terlalu lama merespons."
               : "Kedua model Gemini gagal dihubungi."
         });
       }
@@ -214,7 +235,7 @@ by the JSON response schema.
 
     // CEK RESPONS GEMINI
     if (!response || !response.ok) {
-      console.error("Gemini API:", result);
+      console.error("Gemini API Error:", result);
 
       return res.status(502).json({
         error:
@@ -230,7 +251,7 @@ by the JSON response schema.
         .filter(step => step.type === "model_output")
         .flatMap(step => step.content || [])
         .filter(item => item.type === "text")
-        .map(item => item.text)
+        .map(item => item.text || "")
         .join("\n");
 
     if (!output) {
@@ -243,34 +264,47 @@ by the JSON response schema.
     try {
       answer = JSON.parse(output.trim());
     } catch (error) {
-      console.error("Invalid JSON output:", output);
+      console.error("Invalid JSON:", output);
 
       throw new Error(
-        "Gemini mengirim format jawaban yang tidak valid."
+        "Format jawaban Gemini tidak valid."
       );
     }
 
-    // VALIDASI ISI
-    if (
-      typeof answer.reply_en !== "string" ||
-      typeof answer.translation_id !== "string" ||
-      typeof answer.correction_id !== "string"
-    ) {
+    // VALIDASI EMPAT FIELD
+    const requiredFields = [
+      "reply_en",
+      "translation_user_id",
+      "translation_id",
+      "correction_id"
+    ];
+
+    for (const field of requiredFields) {
+      if (typeof answer[field] !== "string") {
+        throw new Error(
+          "Field Gemini tidak lengkap: " + field
+        );
+      }
+    }
+
+    // VALIDASI ID INTERAKSI
+    if (!result.id) {
       throw new Error(
-        "Struktur jawaban Gemini tidak lengkap."
+        "Gemini tidak mengirim ID percakapan."
       );
     }
 
-    // KIRIM KE INDEX.HTML
+    // KIRIM RESPONS KE INDEX.HTML
     return res.status(200).json({
-      id: result.id || null,
+      id: result.id,
       reply_en: answer.reply_en,
+      translation_user_id: answer.translation_user_id,
       translation_id: answer.translation_id,
       correction_id: answer.correction_id
     });
 
   } catch (error) {
-    console.error("Server error:", error);
+    console.error("Server Error:", error);
 
     return res.status(500).json({
       error:
