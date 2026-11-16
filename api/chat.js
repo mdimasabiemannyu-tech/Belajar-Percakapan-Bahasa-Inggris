@@ -1,7 +1,9 @@
+
 export default async function handler(req, res) {
+  // Hanya menerima POST
   if (req.method !== "POST") {
     return res.status(405).json({
-      error: "Method not allowed"
+      error: "Method not allowed."
     });
   }
 
@@ -9,7 +11,7 @@ export default async function handler(req, res) {
 
   if (!apiKey) {
     return res.status(500).json({
-      error: "API Key Gemini belum dipasang."
+      error: "API Key Gemini belum dipasang di Vercel."
     });
   }
 
@@ -20,7 +22,8 @@ export default async function handler(req, res) {
     topic = "Daily Conversation"
   } = req.body || {};
 
-  if (!message || typeof message !== "string") {
+  // Validasi pesan
+  if (!message || typeof message !== "string" || !message.trim()) {
     return res.status(400).json({
       error: "Pesan tidak boleh kosong."
     });
@@ -32,13 +35,15 @@ export default async function handler(req, res) {
     });
   }
 
+  // Instruksi AI
   const systemInstruction = `
 You are Dimas English AI.
 
-You are a friendly English tutor for Indonesian students.
+You are a friendly English conversation tutor
+for Indonesian students.
 
 Student level: ${level}
-Topic: ${topic}
+Conversation topic: ${topic}
 
 RULES:
 
@@ -48,12 +53,14 @@ RULES:
 4. Answer the student's actual message.
 5. Ask only ONE relevant follow-up question.
 6. Translate your English response into Indonesian.
-7. Correct the student's grammar when necessary.
+7. Correct grammar mistakes gently.
 8. Explain mistakes briefly in Indonesian.
 9. Keep responses short and natural.
-10. Never repeat the same generic response.
+10. Never repeat generic responses.
+11. Encourage the student to keep practicing.
+12. Do not make the conversation sound like a textbook.
 
-Return valid JSON:
+Return ONLY valid JSON with exactly these keys:
 
 {
   "reply_en": "English response",
@@ -64,15 +71,16 @@ Return valid JSON:
 If the student's sentence is already correct,
 return an empty correction_id.
 
-Do not use Markdown.
+Do not use Markdown code fences.
 `;
 
+  // Fungsi untuk menghubungi Gemini
   async function callGemini(model) {
     const controller = new AbortController();
 
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 25000);
+    }, 20000);
 
     try {
       const payload = {
@@ -82,8 +90,7 @@ Do not use Markdown.
 
         generation_config: {
           thinking_level: "low",
-          max_output_tokens: 220,
-          temperature: 0.7
+          max_output_tokens: 220
         }
       };
 
@@ -95,18 +102,28 @@ Do not use Markdown.
         "https://generativelanguage.googleapis.com/v1beta/interactions",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
             "x-goog-api-key": apiKey
           },
-
           body: JSON.stringify(payload),
           signal: controller.signal
         }
       );
 
-      const result = await response.json();
+      const responseText = await response.text();
+
+      let result;
+
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        result = {
+          error: {
+            message: "Respons Gemini bukan JSON yang valid."
+          }
+        };
+      }
 
       return {
         response,
@@ -119,11 +136,14 @@ Do not use Markdown.
   }
 
   try {
-
     let response;
     let result;
+    let primaryError = null;
 
+    // =================================
     // MODEL UTAMA
+    // =================================
+
     try {
       const primary = await callGemini(
         "gemini-3.1-flash-lite"
@@ -133,38 +153,69 @@ Do not use Markdown.
       result = primary.result;
 
     } catch (error) {
-      if (error.name === "AbortError") {
-        return res.status(504).json({
-          error: "Gemini terlalu lama merespons."
+      primaryError = error;
+
+      console.error(
+        "Primary Gemini Error:",
+        error.message
+      );
+    }
+
+    // =================================
+    // CEK APAKAH PERLU MODEL CADANGAN
+    // =================================
+
+    const shouldUseFallback =
+      !response ||
+      !response.ok &&
+      [429, 500, 502, 503, 504].includes(response.status);
+
+    if (shouldUseFallback) {
+      console.log("Using fallback Gemini model...");
+
+      try {
+        const fallback = await callGemini(
+          "gemini-3.5-flash-lite"
+        );
+
+        response = fallback.response;
+        result = fallback.result;
+
+      } catch (fallbackError) {
+        console.error(
+          "Fallback Gemini Error:",
+          fallbackError.message
+        );
+
+        if (fallbackError.name === "AbortError") {
+          return res.status(504).json({
+            error: "Model utama dan cadangan terlalu lama merespons."
+          });
+        }
+
+        return res.status(502).json({
+          error: "Model utama dan cadangan gagal dihubungi."
         });
       }
-
-      throw error;
     }
 
-    // MODEL CADANGAN
-    if (
-      !response.ok &&
-      [429, 500, 502, 503, 504].includes(response.status)
-    ) {
+    // =================================
+    // CEK HASIL AKHIR API
+    // =================================
 
-      const fallback = await callGemini(
-        "gemini-3.5-flash-lite"
-      );
-
-      response = fallback.response;
-      result = fallback.result;
-    }
-
-    if (!response.ok) {
-      console.error("Gemini Error:", result);
+    if (!response || !response.ok) {
+      console.error("Gemini API Error:", result);
 
       return res.status(502).json({
         error:
-          result.error?.message ||
+          result?.error?.message ||
           "Gemini sedang mengalami gangguan."
       });
     }
+
+    // =================================
+    // AMBIL JAWABAN AI
+    // =================================
 
     const output =
       result.output_text ||
@@ -179,25 +230,35 @@ Do not use Markdown.
       throw new Error("Jawaban Gemini kosong.");
     }
 
+    // =================================
+    // PARSE JSON
+    // =================================
+
     let answer;
 
     try {
-      const clean = output
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
+      const cleanOutput = output
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/i, "")
         .trim();
 
-      answer = JSON.parse(clean);
+      answer = JSON.parse(cleanOutput);
 
     } catch {
+      console.error("Invalid AI Output:", output);
+
       throw new Error(
-        "Format jawaban AI tidak valid."
+        "Format jawaban AI tidak valid. Silakan coba lagi."
       );
     }
 
-    return res.status(200).json({
+    // =================================
+    // KIRIM HASIL KE FRONTEND
+    // =================================
 
-      id: result.id,
+    return res.status(200).json({
+      id: result.id || null,
 
       reply_en:
         answer.reply_en || "",
@@ -207,11 +268,9 @@ Do not use Markdown.
 
       correction_id:
         answer.correction_id || ""
-
     });
 
   } catch (error) {
-
     console.error("Server Error:", error);
 
     return res.status(500).json({
@@ -219,6 +278,5 @@ Do not use Markdown.
         error.message ||
         "Terjadi kesalahan pada server."
     });
-
   }
 }
