@@ -1,4 +1,3 @@
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -10,65 +9,81 @@ export default async function handler(req, res) {
 
   if (!apiKey) {
     return res.status(500).json({
-      error: "GEMINI_API_KEY belum dipasang di Vercel."
+      error: "API Key Gemini belum dipasang."
     });
   }
 
-  try {
-    const {
-      message,
-      previousId,
-      level = "Beginner",
-      topic = "Daily Conversation"
-    } = req.body || {};
+  const {
+    message,
+    previousId,
+    level = "Beginner",
+    topic = "Daily Conversation"
+  } = req.body || {};
 
-    if (!message || typeof message !== "string") {
-      return res.status(400).json({
-        error: "Pesan tidak boleh kosong."
-      });
-    }
+  if (!message || typeof message !== "string") {
+    return res.status(400).json({
+      error: "Pesan tidak boleh kosong."
+    });
+  }
 
-    if (message.length > 4000) {
-      return res.status(400).json({
-        error: "Pesan terlalu panjang."
-      });
-    }
+  if (message.length > 2000) {
+    return res.status(400).json({
+      error: "Pesan terlalu panjang."
+    });
+  }
 
-    const systemInstruction = `
-You are Dimas English AI, a friendly English conversation tutor
-for an Indonesian learner.
+  const systemInstruction = `
+You are Dimas English AI.
+
+You are a friendly English tutor for Indonesian students.
 
 Student level: ${level}
-Conversation topic: ${topic}
+Topic: ${topic}
 
-Your responsibilities:
-1. Have a natural, open-ended English conversation.
-2. Adapt your English to the student's level.
-3. Avoid fixed or repetitive responses.
-4. Ask one relevant follow-up question when appropriate.
-5. Give a natural Indonesian translation of your reply.
-6. Correct the student's English gently.
-7. Explain corrections briefly in Indonesian.
-8. Encourage the student.
+RULES:
 
-Return ONLY valid JSON with exactly these keys:
+1. Speak naturally like a real conversation partner.
+2. Use simple English appropriate to the student's level.
+3. Remember the previous conversation.
+4. Answer the student's actual message.
+5. Ask only ONE relevant follow-up question.
+6. Translate your English response into Indonesian.
+7. Correct the student's grammar when necessary.
+8. Explain mistakes briefly in Indonesian.
+9. Keep responses short and natural.
+10. Never repeat the same generic response.
+
+Return valid JSON:
+
 {
-  "reply_en": "Your natural English response",
+  "reply_en": "English response",
   "translation_id": "Indonesian translation",
-  "correction_id": "Correction and short Indonesian explanation, or empty string"
+  "correction_id": "Grammar correction and explanation"
 }
 
-Do not use Markdown code fences.
+If the student's sentence is already correct,
+return an empty correction_id.
+
+Do not use Markdown.
 `;
 
-    // Fungsi untuk menghubungi Gemini
-    async function callGemini(model) {
+  async function callGemini(model) {
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 25000);
+
+    try {
       const payload = {
-        model,
+        model: model,
         input: message,
         system_instruction: systemInstruction,
+
         generation_config: {
-          thinking_level: "low"
+          thinking_level: "low",
+          max_output_tokens: 220,
+          temperature: 0.7
         }
       };
 
@@ -80,11 +95,14 @@ Do not use Markdown code fences.
         "https://generativelanguage.googleapis.com/v1beta/interactions",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
             "x-goog-api-key": apiKey
           },
-          body: JSON.stringify(payload)
+
+          body: JSON.stringify(payload),
+          signal: controller.signal
         }
       );
 
@@ -94,21 +112,41 @@ Do not use Markdown code fences.
         response,
         result
       };
+
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  try {
+
+    let response;
+    let result;
+
+    // MODEL UTAMA
+    try {
+      const primary = await callGemini(
+        "gemini-3.1-flash-lite"
+      );
+
+      response = primary.response;
+      result = primary.result;
+
+    } catch (error) {
+      if (error.name === "AbortError") {
+        return res.status(504).json({
+          error: "Gemini terlalu lama merespons."
+        });
+      }
+
+      throw error;
     }
 
-    // Coba model utama terlebih dahulu
-    let { response, result } = await callGemini(
-      "gemini-3.8-flash"
-    );
-
-    // Jika model utama sibuk, gunakan model cadangan
+    // MODEL CADANGAN
     if (
       !response.ok &&
-      (response.status === 429 || response.status === 503)
+      [429, 500, 502, 503, 504].includes(response.status)
     ) {
-      console.log(
-        "Gemini 3.8 Flash sedang sibuk. Mencoba model cadangan..."
-      );
 
       const fallback = await callGemini(
         "gemini-3.5-flash-lite"
@@ -118,18 +156,16 @@ Do not use Markdown code fences.
       result = fallback.result;
     }
 
-    // Jika kedua model gagal
     if (!response.ok) {
-      console.error("Gemini API error:", result);
+      console.error("Gemini Error:", result);
 
-      return res.status(response.status).json({
+      return res.status(502).json({
         error:
           result.error?.message ||
-          "Gemini sedang mengalami gangguan. Silakan coba lagi."
+          "Gemini sedang mengalami gangguan."
       });
     }
 
-    // Ambil teks jawaban
     const output =
       result.output_text ||
       (result.steps || [])
@@ -140,43 +176,49 @@ Do not use Markdown code fences.
         .join("\n");
 
     if (!output) {
-      throw new Error("Gemini tidak memberikan jawaban.");
+      throw new Error("Jawaban Gemini kosong.");
     }
 
-    // Ubah jawaban menjadi JSON
     let answer;
 
     try {
-      const cleanOutput = output
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
+      const clean = output
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
         .trim();
 
-      answer = JSON.parse(cleanOutput);
+      answer = JSON.parse(clean);
 
     } catch {
-      answer = {
-        reply_en: output,
-        translation_id: "",
-        correction_id: ""
-      };
+      throw new Error(
+        "Format jawaban AI tidak valid."
+      );
     }
 
     return res.status(200).json({
+
       id: result.id,
-      reply_en: answer.reply_en || output,
-      translation_id: answer.translation_id || "",
-      correction_id: answer.correction_id || ""
+
+      reply_en:
+        answer.reply_en || "",
+
+      translation_id:
+        answer.translation_id || "",
+
+      correction_id:
+        answer.correction_id || ""
+
     });
 
   } catch (error) {
-    console.error("Server error:", error);
+
+    console.error("Server Error:", error);
 
     return res.status(500).json({
       error:
         error.message ||
         "Terjadi kesalahan pada server."
     });
+
   }
 }
