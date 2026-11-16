@@ -1,0 +1,687 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#10172a">
+<title>Dimas English AI</title>
+
+<style>
+:root {
+  --bg:#0b1020;
+  --panel:#141d33;
+  --panel2:#1b2742;
+  --text:#eef3ff;
+  --muted:#aab7d1;
+  --blue:#6d8cff;
+  --cyan:#55d6d0;
+  --line:#2b3855;
+}
+
+* {box-sizing:border-box}
+
+body {
+  margin:0;
+  background:radial-gradient(circle at 15% 0%,#1b2b51,transparent 38%),var(--bg);
+  color:var(--text);
+  font:15px/1.5 system-ui,sans-serif;
+}
+
+.app {
+  max-width:1050px;
+  margin:auto;
+  padding:22px 16px 40px;
+}
+
+.top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:22px;
+}
+
+.brand {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo {
+  width:46px;
+  height:46px;
+  border-radius:15px;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:grid;
+  place-items:center;
+  font-size:23px;
+  font-weight:800;
+  color:#081326;
+}
+
+h1 {font-size:21px;margin:0}
+h2 {font-size:15px;margin:0 0 13px}
+
+.sub {
+  color:var(--muted);
+  font-size:12px;
+}
+
+.pill {
+  border:1px solid var(--line);
+  border-radius:99px;
+  padding:7px 11px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.layout {
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:16px;
+}
+
+.panel {
+  background:rgba(20,29,51,.94);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 16px 45px #0003;
+}
+
+.field {margin:13px 0}
+
+.field label {
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:6px;
+}
+
+select {
+  width:100%;
+  padding:11px 12px;
+  background:var(--panel2);
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:11px;
+}
+
+button {font:inherit;cursor:pointer}
+
+.primary {
+  background:linear-gradient(135deg,var(--blue),#5871dc);
+  color:white;
+  border:0;
+  border-radius:12px;
+  padding:11px 14px;
+  font-weight:650;
+}
+
+.secondary {
+  background:var(--panel2);
+  border:1px solid var(--line);
+  color:var(--text);
+  border-radius:12px;
+  padding:10px 14px;
+}
+
+.hint,.note {
+  font-size:12px;
+  color:var(--muted);
+  margin-top:15px;
+}
+
+.status {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:18px;
+}
+
+.dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#77839b;
+}
+
+.dot.live {
+  background:#4fe0a1;
+  box-shadow:0 0 12px #4fe0a1;
+}
+
+.chat {
+  min-height:590px;
+  display:flex;
+  flex-direction:column;
+}
+
+.chathead {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--line);
+}
+
+.messages {
+  flex:1;
+  min-height:390px;
+  max-height:480px;
+  overflow:auto;
+  padding:16px 2px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.msg {
+  max-width:86%;
+  padding:12px 14px;
+  border-radius:15px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  align-self:flex-start;
+}
+
+.msg.user {
+  align-self:flex-end;
+  background:#253b72;
+  border-color:#3b5795;
+}
+
+.who {
+  font-size:11px;
+  color:var(--cyan);
+  margin-bottom:5px;
+  font-weight:700;
+}
+
+.translation {
+  color:#c2cde2;
+  border-top:1px solid #ffffff20;
+  margin-top:8px;
+  padding-top:7px;
+  font-size:13px;
+}
+
+.welcome {
+  color:var(--muted);
+  font-size:13px;
+  text-align:center;
+  margin:auto;
+  max-width:420px;
+  padding:25px;
+}
+
+.composer {
+  border-top:1px solid var(--line);
+  padding-top:14px;
+}
+
+.inputrow {
+  display:flex;
+  gap:9px;
+}
+
+.inputrow input {
+  flex:1;
+  min-width:0;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:13px;
+  color:var(--text);
+  outline:none;
+}
+
+.mic {
+  width:48px;
+  font-size:18px;
+}
+
+.mic.active {
+  background:#a8324b;
+  color:white;
+}
+
+.controls {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.controls button {
+  font-size:12px;
+  padding:8px 11px;
+}
+
+@media(max-width:760px) {
+  .layout {grid-template-columns:1fr}
+  .chat {min-height:65vh}
+  .messages {min-height:38vh;max-height:48vh}
+  .pill {display:none}
+}
+</style>
+</head>
+
+<body>
+<main class="app">
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">EN</div>
+    <div>
+      <h1>Dimas English AI</h1>
+      <div class="sub">
+        Speak English • Understand Indonesian • Practice Every Day
+      </div>
+    </div>
+  </div>
+  <div class="pill">🎙️ Voice Conversation Practice</div>
+</header>
+
+<section class="layout">
+
+<aside class="panel">
+  <h2>Pengaturan Belajar</h2>
+
+  <div class="field">
+    <label>Level Bahasa Inggris</label>
+    <select id="level">
+      <option value="Beginner">Beginner - Pemula</option>
+      <option value="Elementary">Elementary - Dasar</option>
+      <option value="Intermediate">Intermediate - Menengah</option>
+      <option value="Advanced">Advanced - Mahir</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Topik Percakapan</label>
+    <select id="topic">
+      <option>Daily Conversation</option>
+      <option>Introducing Yourself</option>
+      <option>Office & Business</option>
+      <option>Customer Service</option>
+      <option>At a Restaurant</option>
+      <option>Traveling</option>
+      <option>Shopping</option>
+      <option>Free Conversation</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Suara AI</label>
+    <select id="voice">
+      <option value="en-US">English - United States</option>
+      <option value="en-GB">English - United Kingdom</option>
+      <option value="en-AU">English - Australia</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Terjemahan</label>
+    <select id="translation">
+      <option value="yes">Tampilkan Bahasa Indonesia</option>
+      <option value="no">Sembunyikan Terjemahan</option>
+    </select>
+  </div>
+
+  <button class="primary" id="startBtn" style="width:100%">
+    ▶ Mulai Latihan
+  </button>
+
+  <div class="status">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Belum memulai sesi</span>
+  </div>
+
+  <p class="hint">
+    Gunakan Google Chrome dan izinkan akses mikrofon.
+  </p>
+</aside>
+
+<section class="panel chat">
+
+  <div class="chathead">
+    <div>
+      <h2>English Conversation Room</h2>
+      <div class="sub" id="sessionLabel">
+        Pilih topik, lalu mulai berbicara
+      </div>
+    </div>
+    <button class="secondary" id="clearBtn">
+      Bersihkan
+    </button>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      👋 Hello! I'm your English practice partner.
+      <br><br>
+      Tekan Mulai Latihan untuk memulai.
+    </div>
+  </div>
+
+  <div class="composer">
+
+    <div class="inputrow">
+      <input
+        id="textInput"
+        type="text"
+        placeholder="Ketik kalimat bahasa Inggris..."
+      >
+
+      <button class="primary" id="sendBtn">
+        Kirim
+      </button>
+
+      <button class="secondary mic" id="micBtn">
+        🎙️
+      </button>
+    </div>
+
+    <div class="controls">
+      <button class="secondary" id="repeatBtn">
+        🔊 Ulangi Suara AI
+      </button>
+
+      <button class="secondary" id="stopBtn">
+        ⏹ Hentikan Suara
+      </button>
+
+      <button class="secondary" id="helpBtn">
+        💡 Bantu Saya Menjawab
+      </button>
+    </div>
+
+    <div class="note">
+      Versi awal menggunakan suara browser dan terjemahan online.
+      AI generatif sungguhan memerlukan backend dan API AI.
+    </div>
+
+  </div>
+</section>
+</section>
+</main>
+
+<script>
+(() => {
+
+const $ = id => document.getElementById(id);
+
+const messages = $('messages');
+let recognition = null;
+let lastAiText = '';
+let running = false;
+
+const synth = window.speechSynthesis;
+
+const addMessage = (role, english, indo='') => {
+
+  $('welcome')?.remove();
+
+  const node = document.createElement('div');
+  node.className = 'msg ' + (role === 'You' ? 'user' : 'ai');
+
+  const who = document.createElement('div');
+  who.className = 'who';
+  who.textContent = role === 'You' ? 'YOU · KAMU' : 'AI ENGLISH PARTNER';
+
+  const en = document.createElement('div');
+  en.textContent = english;
+
+  node.append(who,en);
+
+  if (indo && $('translation').value === 'yes') {
+    const tr = document.createElement('div');
+    tr.className = 'translation';
+    tr.textContent = '🇮🇩 ' + indo;
+    node.append(tr);
+  }
+
+  messages.append(node);
+  messages.scrollTop = messages.scrollHeight;
+};
+
+const setStatus = text => {
+  $('statusText').textContent = text;
+  $('statusDot').classList.toggle('live',running);
+};
+
+async function translate(text, from='en', to='id') {
+
+  try {
+    const url =
+      'https://api.mymemory.translated.net/get?q=' +
+      encodeURIComponent(text) +
+      '&langpair=' + from + '|' + to;
+
+    const r = await fetch(url);
+    const d = await r.json();
+
+    return d.responseData?.translatedText || '';
+
+  } catch(e) {
+    return '';
+  }
+}
+
+function speak(text) {
+
+  if (!synth) return;
+
+  synth.cancel();
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = $('voice').value;
+  u.rate = 0.92;
+
+  synth.speak(u);
+}
+
+function openingLine() {
+
+  const topic = $('topic').value;
+  const level = $('level').value;
+
+  const line = level === 'Beginner'
+    ? `Hello! Welcome. Let's practice ${topic.toLowerCase()}. What is your name?`
+    : `Hello! Let's have a ${topic.toLowerCase()} conversation. How is your day going?`;
+
+  lastAiText = line;
+
+  addMessage(
+    'AI',
+    line,
+    'Halo! Selamat datang. Mari berlatih ' + topic +
+    '. Bagaimana kabarmu hari ini?'
+  );
+
+  speak(line);
+}
+
+async function replyTo(text) {
+
+  addMessage('You',text,await translate(text,'en','id'));
+
+  const t = text.toLowerCase();
+
+  let answer;
+
+  if (/hello|hi|hey/.test(t)) {
+    answer = "Hello! It's nice to meet you. Where are you from?";
+  }
+  else if (/my name is|i am|i'm/.test(t)) {
+    answer = "Nice to meet you! What do you do for work?";
+  }
+  else if (/palembang|indonesia/.test(t)) {
+    answer = "That sounds interesting! What do you like most about your city?";
+  }
+  else if (/pegadaian|work|job|cashier/.test(t)) {
+    answer = "That's great! What is your main responsibility at work?";
+  }
+  else if (/thank/.test(t)) {
+    answer = "You're welcome! Can you tell me a little more?";
+  }
+  else {
+    answer = "Good try! Could you tell me more about that? Try to answer in one or two complete English sentences.";
+  }
+
+  lastAiText = answer;
+
+  addMessage(
+    'AI',
+    answer,
+    await translate(answer,'en','id')
+  );
+
+  speak(answer);
+}
+
+function startListening() {
+
+  const SR = window.SpeechRecognition ||
+             window.webkitSpeechRecognition;
+
+  if (!SR) {
+    alert('Browser belum mendukung Speech Recognition. Gunakan Google Chrome terbaru.');
+    return;
+  }
+
+  recognition = new SR();
+
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+
+    running = true;
+
+    $('micBtn').classList.add('active');
+    $('micBtn').textContent = '🔴';
+
+    setStatus('Mendengarkan... silakan berbicara');
+  };
+
+  recognition.onresult = e => {
+
+    const text = e.results[0][0].transcript;
+
+    $('textInput').value = text;
+
+    replyTo(text);
+  };
+
+  recognition.onerror = e => {
+    setStatus('Mikrofon: ' + e.error);
+  };
+
+  recognition.onend = () => {
+
+    running = false;
+
+    $('micBtn').classList.remove('active');
+    $('micBtn').textContent = '🎙️';
+
+    setStatus('Siap mendengarkan');
+  };
+
+  try {
+    recognition.start();
+  } catch(e) {
+    setStatus('Mikrofon sedang digunakan');
+  }
+}
+
+$('startBtn').addEventListener('click',() => {
+
+  $('sessionLabel').textContent =
+    $('level').value + ' · ' + $('topic').value;
+
+  running = true;
+
+  setStatus('Sesi latihan aktif');
+
+  openingLine();
+});
+
+$('micBtn').addEventListener('click',() => {
+
+  if (recognition && running) {
+    recognition.stop();
+    return;
+  }
+
+  startListening();
+});
+
+$('sendBtn').addEventListener('click',() => {
+
+  const v = $('textInput').value.trim();
+
+  if (!v) return;
+
+  $('textInput').value = '';
+
+  replyTo(v);
+});
+
+$('textInput').addEventListener('keydown',e => {
+
+  if (e.key === 'Enter') {
+    $('sendBtn').click();
+  }
+
+});
+
+$('repeatBtn').addEventListener('click',() => {
+
+  if (lastAiText) speak(lastAiText);
+
+});
+
+$('stopBtn').addEventListener('click',() => {
+
+  synth?.cancel();
+
+  if (recognition) recognition.stop();
+
+});
+
+$('clearBtn').addEventListener('click',() => {
+
+  messages.innerHTML =
+    '<div class="welcome" id="welcome">Percakapan dibersihkan. Tekan Mulai Latihan untuk memulai lagi.</div>';
+
+  lastAiText = '';
+
+});
+
+$('helpBtn').addEventListener('click',() => {
+
+  const help = "You can say: I am from Palembang, Indonesia.";
+
+  addMessage(
+    'AI',
+    help,
+    'Kamu bisa mengatakan: Saya berasal dari Palembang, Indonesia.'
+  );
+
+  lastAiText = help;
+
+  speak(help);
+
+});
+
+})();
+</script>
+
+</body>
+</html>
