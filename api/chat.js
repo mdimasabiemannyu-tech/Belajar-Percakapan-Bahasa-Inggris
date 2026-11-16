@@ -1,6 +1,5 @@
 
 export default async function handler(req, res) {
-  // Hanya menerima POST
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed."
@@ -11,7 +10,7 @@ export default async function handler(req, res) {
 
   if (!apiKey) {
     return res.status(500).json({
-      error: "API Key Gemini belum dipasang di Vercel."
+      error: "GEMINI_API_KEY belum dipasang di Vercel."
     });
   }
 
@@ -22,8 +21,10 @@ export default async function handler(req, res) {
     topic = "Daily Conversation"
   } = req.body || {};
 
-  // Validasi pesan
-  if (!message || typeof message !== "string" || !message.trim()) {
+  if (
+    typeof message !== "string" ||
+    !message.trim()
+  ) {
     return res.status(400).json({
       error: "Pesan tidak boleh kosong."
     });
@@ -35,7 +36,6 @@ export default async function handler(req, res) {
     });
   }
 
-  // Instruksi AI
   const systemInstruction = `
 You are Dimas English AI.
 
@@ -47,34 +47,50 @@ Conversation topic: ${topic}
 
 RULES:
 
-1. Speak naturally like a real conversation partner.
-2. Use simple English appropriate to the student's level.
+1. Speak naturally like a real human conversation partner.
+2. Use English appropriate to the student's level.
 3. Remember the previous conversation.
-4. Answer the student's actual message.
+4. Answer the actual message.
 5. Ask only ONE relevant follow-up question.
-6. Translate your English response into Indonesian.
+6. Translate your English response into natural Indonesian.
 7. Correct grammar mistakes gently.
-8. Explain mistakes briefly in Indonesian.
-9. Keep responses short and natural.
+8. Explain corrections briefly in Indonesian.
+9. Keep answers short and conversational.
 10. Never repeat generic responses.
-11. Encourage the student to keep practicing.
-12. Do not make the conversation sound like a textbook.
+11. Encourage the student.
+12. If the student asks for help, answer helpfully.
+13. Never translate the student's message yourself.
+14. Do not confuse the student's meaning.
 
-Return ONLY valid JSON with exactly these keys:
-
-{
-  "reply_en": "English response",
-  "translation_id": "Indonesian translation",
-  "correction_id": "Grammar correction and explanation"
-}
-
-If the student's sentence is already correct,
-return an empty correction_id.
-
-Do not use Markdown code fences.
+Return the three required fields exactly as specified
+by the JSON response schema.
 `;
 
-  // Fungsi untuk menghubungi Gemini
+  const responseSchema = {
+    type: "OBJECT",
+    properties: {
+      reply_en: {
+        type: "STRING"
+      },
+      translation_id: {
+        type: "STRING"
+      },
+      correction_id: {
+        type: "STRING"
+      }
+    },
+    required: [
+      "reply_en",
+      "translation_id",
+      "correction_id"
+    ],
+    propertyOrdering: [
+      "reply_en",
+      "translation_id",
+      "correction_id"
+    ]
+  };
+
   async function callGemini(model) {
     const controller = new AbortController();
 
@@ -84,9 +100,15 @@ Do not use Markdown code fences.
 
     try {
       const payload = {
-        model: model,
+        model,
         input: message,
         system_instruction: systemInstruction,
+
+        response_format: {
+          type: "text",
+          mime_type: "application/json",
+          schema: responseSchema
+        },
 
         generation_config: {
           thinking_level: "low",
@@ -111,16 +133,16 @@ Do not use Markdown code fences.
         }
       );
 
-      const responseText = await response.text();
+      const raw = await response.text();
 
       let result;
 
       try {
-        result = JSON.parse(responseText);
+        result = JSON.parse(raw);
       } catch {
         result = {
           error: {
-            message: "Respons Gemini bukan JSON yang valid."
+            message: "Respons Gemini tidak valid."
           }
         };
       }
@@ -136,14 +158,10 @@ Do not use Markdown code fences.
   }
 
   try {
-    let response;
-    let result;
-    let primaryError = null;
+    let response = null;
+    let result = null;
 
-    // =================================
     // MODEL UTAMA
-    // =================================
-
     try {
       const primary = await callGemini(
         "gemini-3.1-flash-lite"
@@ -153,25 +171,21 @@ Do not use Markdown code fences.
       result = primary.result;
 
     } catch (error) {
-      primaryError = error;
-
       console.error(
-        "Primary Gemini Error:",
+        "Primary model error:",
         error.message
       );
     }
 
-    // =================================
-    // CEK APAKAH PERLU MODEL CADANGAN
-    // =================================
-
-    const shouldUseFallback =
+    // MODEL CADANGAN
+    const retry =
       !response ||
-      !response.ok &&
-      [429, 500, 502, 503, 504].includes(response.status);
+      [429, 500, 502, 503, 504].includes(
+        response.status
+      );
 
-    if (shouldUseFallback) {
-      console.log("Using fallback Gemini model...");
+    if (retry) {
+      console.log("Trying fallback model...");
 
       try {
         const fallback = await callGemini(
@@ -181,30 +195,26 @@ Do not use Markdown code fences.
         response = fallback.response;
         result = fallback.result;
 
-      } catch (fallbackError) {
+      } catch (error) {
         console.error(
-          "Fallback Gemini Error:",
-          fallbackError.message
+          "Fallback model error:",
+          error.message
         );
 
-        if (fallbackError.name === "AbortError") {
-          return res.status(504).json({
-            error: "Model utama dan cadangan terlalu lama merespons."
-          });
-        }
-
-        return res.status(502).json({
-          error: "Model utama dan cadangan gagal dihubungi."
+        return res.status(
+          error.name === "AbortError" ? 504 : 502
+        ).json({
+          error:
+            error.name === "AbortError"
+              ? "Kedua model Gemini terlalu lama merespons."
+              : "Kedua model Gemini gagal dihubungi."
         });
       }
     }
 
-    // =================================
-    // CEK HASIL AKHIR API
-    // =================================
-
+    // CEK RESPONS GEMINI
     if (!response || !response.ok) {
-      console.error("Gemini API Error:", result);
+      console.error("Gemini API:", result);
 
       return res.status(502).json({
         error:
@@ -213,10 +223,7 @@ Do not use Markdown code fences.
       });
     }
 
-    // =================================
-    // AMBIL JAWABAN AI
-    // =================================
-
+    // AMBIL OUTPUT
     const output =
       result.output_text ||
       (result.steps || [])
@@ -230,48 +237,40 @@ Do not use Markdown code fences.
       throw new Error("Jawaban Gemini kosong.");
     }
 
-    // =================================
     // PARSE JSON
-    // =================================
-
     let answer;
 
     try {
-      const cleanOutput = output
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
-        .trim();
-
-      answer = JSON.parse(cleanOutput);
-
-    } catch {
-      console.error("Invalid AI Output:", output);
+      answer = JSON.parse(output.trim());
+    } catch (error) {
+      console.error("Invalid JSON output:", output);
 
       throw new Error(
-        "Format jawaban AI tidak valid. Silakan coba lagi."
+        "Gemini mengirim format jawaban yang tidak valid."
       );
     }
 
-    // =================================
-    // KIRIM HASIL KE FRONTEND
-    // =================================
+    // VALIDASI ISI
+    if (
+      typeof answer.reply_en !== "string" ||
+      typeof answer.translation_id !== "string" ||
+      typeof answer.correction_id !== "string"
+    ) {
+      throw new Error(
+        "Struktur jawaban Gemini tidak lengkap."
+      );
+    }
 
+    // KIRIM KE INDEX.HTML
     return res.status(200).json({
       id: result.id || null,
-
-      reply_en:
-        answer.reply_en || "",
-
-      translation_id:
-        answer.translation_id || "",
-
-      correction_id:
-        answer.correction_id || ""
+      reply_en: answer.reply_en,
+      translation_id: answer.translation_id,
+      correction_id: answer.correction_id
     });
 
   } catch (error) {
-    console.error("Server Error:", error);
+    console.error("Server error:", error);
 
     return res.status(500).json({
       error:
