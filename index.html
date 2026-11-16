@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#10172a">
+<meta name="description" content="Dimas English AI - Belajar percakapan bahasa Inggris dengan AI, terjemahan, koreksi grammar, dan latihan suara.">
 <title>Dimas English AI</title>
 
 <style>
@@ -17,19 +18,38 @@
   --blue:#6d8cff;
   --cyan:#55d6d0;
   --line:#2b3855;
+  --green:#4fe0a1;
+  --red:#ff7185;
 }
 
-* {box-sizing:border-box}
+* {
+  box-sizing:border-box;
+}
 
 body {
   margin:0;
-  background:radial-gradient(circle at 15% 0%,#1b2b51,transparent 38%),var(--bg);
+  background:
+    radial-gradient(circle at 15% 0%,#1b2b51,transparent 38%),
+    var(--bg);
   color:var(--text);
   font:15px/1.5 system-ui,sans-serif;
 }
 
+button,input,select {
+  font:inherit;
+}
+
+button {
+  cursor:pointer;
+}
+
+button:disabled {
+  opacity:.55;
+  cursor:not-allowed;
+}
+
 .app {
-  max-width:1050px;
+  max-width:1100px;
   margin:auto;
   padding:22px 16px 40px;
 }
@@ -49,8 +69,9 @@ body {
 }
 
 .logo {
-  width:46px;
-  height:46px;
+  width:48px;
+  height:48px;
+  flex-shrink:0;
   border-radius:15px;
   background:linear-gradient(135deg,var(--blue),var(--cyan));
   display:grid;
@@ -60,8 +81,15 @@ body {
   color:#081326;
 }
 
-h1 {font-size:21px;margin:0}
-h2 {font-size:15px;margin:0 0 13px}
+h1 {
+  font-size:21px;
+  margin:0;
+}
+
+h2 {
+  font-size:15px;
+  margin:0 0 13px;
+}
 
 .sub {
   color:var(--muted);
@@ -90,7 +118,9 @@ h2 {font-size:15px;margin:0 0 13px}
   box-shadow:0 16px 45px #0003;
 }
 
-.field {margin:13px 0}
+.field {
+  margin:13px 0;
+}
 
 .field label {
   display:block;
@@ -106,9 +136,8 @@ select {
   color:var(--text);
   border:1px solid var(--line);
   border-radius:11px;
+  outline:none;
 }
-
-button {font:inherit;cursor:pointer}
 
 .primary {
   background:linear-gradient(135deg,var(--blue),#5871dc);
@@ -117,6 +146,11 @@ button {font:inherit;cursor:pointer}
   border-radius:12px;
   padding:11px 14px;
   font-weight:650;
+  transition:.2s;
+}
+
+.primary:hover {
+  filter:brightness(1.1);
 }
 
 .secondary {
@@ -140,22 +174,24 @@ button {font:inherit;cursor:pointer}
   color:var(--muted);
   font-size:12px;
   margin-top:18px;
+  overflow-wrap:anywhere;
 }
 
 .dot {
   width:8px;
   height:8px;
+  flex-shrink:0;
   border-radius:50%;
   background:#77839b;
 }
 
 .dot.live {
-  background:#4fe0a1;
-  box-shadow:0 0 12px #4fe0a1;
+  background:var(--green);
+  box-shadow:0 0 12px var(--green);
 }
 
 .chat {
-  min-height:590px;
+  min-height:650px;
   display:flex;
   flex-direction:column;
 }
@@ -164,6 +200,7 @@ button {font:inherit;cursor:pointer}
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:10px;
   padding-bottom:14px;
   border-bottom:1px solid var(--line);
 }
@@ -171,21 +208,24 @@ button {font:inherit;cursor:pointer}
 .messages {
   flex:1;
   min-height:390px;
-  max-height:480px;
+  max-height:520px;
   overflow:auto;
   padding:16px 2px;
   display:flex;
   flex-direction:column;
   gap:14px;
+  scroll-behavior:smooth;
 }
 
 .msg {
-  max-width:86%;
+  max-width:88%;
   padding:12px 14px;
   border-radius:15px;
   background:var(--panel2);
   border:1px solid var(--line);
   align-self:flex-start;
+  overflow-wrap:anywhere;
+  white-space:pre-wrap;
 }
 
 .msg.user {
@@ -207,6 +247,16 @@ button {font:inherit;cursor:pointer}
   margin-top:8px;
   padding-top:7px;
   font-size:13px;
+  white-space:pre-wrap;
+}
+
+.correction {
+  color:#8ee6bc;
+  border-top:1px solid #ffffff20;
+  margin-top:8px;
+  padding-top:7px;
+  font-size:13px;
+  white-space:pre-wrap;
 }
 
 .welcome {
@@ -214,7 +264,7 @@ button {font:inherit;cursor:pointer}
   font-size:13px;
   text-align:center;
   margin:auto;
-  max-width:420px;
+  max-width:440px;
   padding:25px;
 }
 
@@ -239,8 +289,13 @@ button {font:inherit;cursor:pointer}
   outline:none;
 }
 
+.inputrow input:focus {
+  border-color:var(--blue);
+}
+
 .mic {
   width:48px;
+  flex-shrink:0;
   font-size:18px;
 }
 
@@ -261,11 +316,58 @@ button {font:inherit;cursor:pointer}
   padding:8px 11px;
 }
 
+.typing {
+  color:var(--muted);
+  font-size:12px;
+  padding:5px 3px;
+}
+
+.footer {
+  text-align:center;
+  color:#71809e;
+  font-size:11px;
+  margin-top:22px;
+}
+
 @media(max-width:760px) {
-  .layout {grid-template-columns:1fr}
-  .chat {min-height:65vh}
-  .messages {min-height:38vh;max-height:48vh}
-  .pill {display:none}
+  .layout {
+    grid-template-columns:1fr;
+  }
+
+  .chat {
+    min-height:65vh;
+  }
+
+  .messages {
+    min-height:38vh;
+    max-height:48vh;
+  }
+
+  .pill {
+    display:none;
+  }
+
+  .app {
+    padding:15px 12px 30px;
+  }
+}
+
+@media(max-width:420px) {
+  .inputrow {
+    flex-wrap:wrap;
+  }
+
+  .inputrow input {
+    flex-basis:100%;
+  }
+
+  .inputrow button {
+    flex:1;
+  }
+
+  .msg {
+    max-width:95%;
+  }
 }
 </style>
 </head>
@@ -283,16 +385,18 @@ button {font:inherit;cursor:pointer}
       </div>
     </div>
   </div>
-  <div class="pill">🎙️ Voice Conversation Practice</div>
+
+  <div class="pill">🎙️ AI Voice Conversation Practice</div>
 </header>
 
 <section class="layout">
 
 <aside class="panel">
+
   <h2>Pengaturan Belajar</h2>
 
   <div class="field">
-    <label>Level Bahasa Inggris</label>
+    <label for="level">Level Bahasa Inggris</label>
     <select id="level">
       <option value="Beginner">Beginner - Pemula</option>
       <option value="Elementary">Elementary - Dasar</option>
@@ -302,7 +406,7 @@ button {font:inherit;cursor:pointer}
   </div>
 
   <div class="field">
-    <label>Topik Percakapan</label>
+    <label for="topic">Topik Percakapan</label>
     <select id="topic">
       <option>Daily Conversation</option>
       <option>Introducing Yourself</option>
@@ -311,12 +415,14 @@ button {font:inherit;cursor:pointer}
       <option>At a Restaurant</option>
       <option>Traveling</option>
       <option>Shopping</option>
+      <option>Job Interview</option>
+      <option>Banking & Finance</option>
       <option>Free Conversation</option>
     </select>
   </div>
 
   <div class="field">
-    <label>Suara AI</label>
+    <label for="voice">Suara AI</label>
     <select id="voice">
       <option value="en-US">English - United States</option>
       <option value="en-GB">English - United Kingdom</option>
@@ -325,7 +431,7 @@ button {font:inherit;cursor:pointer}
   </div>
 
   <div class="field">
-    <label>Terjemahan</label>
+    <label for="translation">Terjemahan</label>
     <select id="translation">
       <option value="yes">Tampilkan Bahasa Indonesia</option>
       <option value="no">Sembunyikan Terjemahan</option>
@@ -343,7 +449,19 @@ button {font:inherit;cursor:pointer}
 
   <p class="hint">
     Gunakan Google Chrome dan izinkan akses mikrofon.
+    Pilih level sesuai kemampuanmu.
   </p>
+
+  <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:15px">
+    <h2>Tips Belajar</h2>
+    <p class="hint">
+      1. Cobalah menjawab dalam bahasa Inggris.<br>
+      2. Tidak perlu takut salah.<br>
+      3. Perhatikan koreksi AI.<br>
+      4. Latihan setiap hari.
+    </p>
+  </div>
+
 </aside>
 
 <section class="panel chat">
@@ -355,6 +473,7 @@ button {font:inherit;cursor:pointer}
         Pilih topik, lalu mulai berbicara
       </div>
     </div>
+
     <button class="secondary" id="clearBtn">
       Bersihkan
     </button>
@@ -364,29 +483,35 @@ button {font:inherit;cursor:pointer}
     <div class="welcome" id="welcome">
       👋 Hello! I'm your English practice partner.
       <br><br>
-      Tekan Mulai Latihan untuk memulai.
+      Saya akan menjadi teman latihan bahasa Inggrismu.
+      <br><br>
+      Tekan <b>Mulai Latihan</b> untuk memulai percakapan dengan Gemini AI.
     </div>
   </div>
 
   <div class="composer">
 
     <div class="inputrow">
+
       <input
         id="textInput"
         type="text"
         placeholder="Ketik kalimat bahasa Inggris..."
+        autocomplete="off"
       >
 
       <button class="primary" id="sendBtn">
         Kirim
       </button>
 
-      <button class="secondary mic" id="micBtn">
+      <button class="secondary mic" id="micBtn" title="Gunakan mikrofon">
         🎙️
       </button>
+
     </div>
 
     <div class="controls">
+
       <button class="secondary" id="repeatBtn">
         🔊 Ulangi Suara AI
       </button>
@@ -398,287 +523,462 @@ button {font:inherit;cursor:pointer}
       <button class="secondary" id="helpBtn">
         💡 Bantu Saya Menjawab
       </button>
+
     </div>
 
     <div class="note">
-      Versi awal menggunakan suara browser dan terjemahan online.
-      AI generatif sungguhan memerlukan backend dan API AI.
+      Powered by Gemini AI · Terjemahan Indonesia · Grammar Correction
     </div>
 
   </div>
+
 </section>
 </section>
+
+<div class="footer">
+  Dimas English AI · English Practice Partner
+</div>
+
 </main>
 
 <script>
 (() => {
+  'use strict';
 
-const $ = id => document.getElementById(id);
+  const $ = id => document.getElementById(id);
 
-const messages = $('messages');
-let recognition = null;
-let lastAiText = '';
-let running = false;
+  const messages = $('messages');
 
-const synth = window.speechSynthesis;
+  let recognition = null;
+  let listening = false;
+  let sessionActive = false;
+  let busy = false;
+  let previousId = null;
+  let lastAiText = '';
 
-const addMessage = (role, english, indo='') => {
+  const synth = window.speechSynthesis;
 
-  $('welcome')?.remove();
-
-  const node = document.createElement('div');
-  node.className = 'msg ' + (role === 'You' ? 'user' : 'ai');
-
-  const who = document.createElement('div');
-  who.className = 'who';
-  who.textContent = role === 'You' ? 'YOU · KAMU' : 'AI ENGLISH PARTNER';
-
-  const en = document.createElement('div');
-  en.textContent = english;
-
-  node.append(who,en);
-
-  if (indo && $('translation').value === 'yes') {
-    const tr = document.createElement('div');
-    tr.className = 'translation';
-    tr.textContent = '🇮🇩 ' + indo;
-    node.append(tr);
+  function setStatus(text) {
+    $('statusText').textContent = text;
+    $('statusDot').classList.toggle(
+      'live',
+      sessionActive || listening
+    );
   }
 
-  messages.append(node);
-  messages.scrollTop = messages.scrollHeight;
-};
+  function setBusy(value) {
+    busy = value;
 
-const setStatus = text => {
-  $('statusText').textContent = text;
-  $('statusDot').classList.toggle('live',running);
-};
+    $('sendBtn').disabled = value;
+    $('startBtn').disabled = value;
+    $('helpBtn').disabled = value;
 
-async function translate(text, from='en', to='id') {
-
-  try {
-    const url =
-      'https://api.mymemory.translated.net/get?q=' +
-      encodeURIComponent(text) +
-      '&langpair=' + from + '|' + to;
-
-    const r = await fetch(url);
-    const d = await r.json();
-
-    return d.responseData?.translatedText || '';
-
-  } catch(e) {
-    return '';
+    $('sendBtn').textContent = value
+      ? 'Tunggu...'
+      : 'Kirim';
   }
-}
 
-function speak(text) {
+  function addMessage(role, english, indo = '', correction = '') {
+    $('welcome')?.remove();
 
-  if (!synth) return;
+    const node = document.createElement('div');
 
-  synth.cancel();
+    node.className =
+      'msg ' + (role === 'You' ? 'user' : 'ai');
 
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = $('voice').value;
-  u.rate = 0.92;
+    const who = document.createElement('div');
+    who.className = 'who';
 
-  synth.speak(u);
-}
+    who.textContent = role === 'You'
+      ? 'YOU · KAMU'
+      : 'AI ENGLISH PARTNER';
 
-function openingLine() {
+    const en = document.createElement('div');
+    en.textContent = english || '';
 
-  const topic = $('topic').value;
-  const level = $('level').value;
+    node.append(who, en);
 
-  const line = level === 'Beginner'
-    ? `Hello! Welcome. Let's practice ${topic.toLowerCase()}. What is your name?`
-    : `Hello! Let's have a ${topic.toLowerCase()} conversation. How is your day going?`;
+    if (indo && $('translation').value === 'yes') {
+      const tr = document.createElement('div');
 
-  lastAiText = line;
+      tr.className = 'translation';
+      tr.textContent = '🇮🇩 ' + indo;
 
-  addMessage(
-    'AI',
-    line,
-    'Halo! Selamat datang. Mari berlatih ' + topic +
-    '. Bagaimana kabarmu hari ini?'
+      node.append(tr);
+    }
+
+    if (correction) {
+      const fix = document.createElement('div');
+
+      fix.className = 'correction';
+      fix.textContent = '✍️ ' + correction;
+
+      node.append(fix);
+    }
+
+    messages.append(node);
+
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function showWelcome(text) {
+    messages.innerHTML = '';
+
+    const welcome = document.createElement('div');
+
+    welcome.className = 'welcome';
+    welcome.id = 'welcome';
+    welcome.textContent = text;
+
+    messages.append(welcome);
+  }
+
+  async function translate(text) {
+    if (!text) return '';
+
+    try {
+      const url =
+        'https://api.mymemory.translated.net/get?q=' +
+        encodeURIComponent(text) +
+        '&langpair=en|id';
+
+      const response = await fetch(url);
+
+      if (!response.ok) return '';
+
+      const data = await response.json();
+
+      return data.responseData?.translatedText || '';
+
+    } catch (error) {
+      console.warn('Terjemahan gagal:', error);
+      return '';
+    }
+  }
+
+  function speak(text) {
+    if (!synth || !text) return;
+
+    synth.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.lang = $('voice').value;
+    utterance.rate = 0.92;
+    utterance.pitch = 1;
+
+    synth.speak(utterance);
+  }
+
+  async function askGemini(message) {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+
+      headers: {
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify({
+        message: message,
+        previousId: previousId,
+        level: $('level').value,
+        topic: $('topic').value
+      })
+    });
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error(
+        'Server tidak memberikan respons JSON. Periksa deployment Vercel.'
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || 'Gagal menghubungi Gemini AI.'
+      );
+    }
+
+    if (!data.id) {
+      throw new Error(
+        'ID percakapan tidak ditemukan. Periksa backend api/chat.js.'
+      );
+    }
+
+    if (!data.reply_en) {
+      throw new Error(
+        'Gemini tidak memberikan jawaban bahasa Inggris.'
+      );
+    }
+
+    previousId = data.id;
+
+    return data;
+  }
+
+  async function startSession() {
+    if (busy) return;
+
+    setBusy(true);
+
+    synth?.cancel();
+
+    previousId = null;
+    sessionActive = false;
+    lastAiText = '';
+
+    showWelcome('Menghubungkan ke Gemini AI...');
+
+    $('sessionLabel').textContent =
+      $('level').value + ' · ' + $('topic').value;
+
+    setStatus('Menghubungkan ke Gemini AI...');
+
+    try {
+      const data = await askGemini(
+        'Start our English practice session. ' +
+        'Greet me warmly and ask one simple opening question about ' +
+        $('topic').value + '. ' +
+        'Adapt your English to my ' +
+        $('level').value +
+        ' level. ' +
+        'Keep your response short and natural. ' +
+        'Provide the Indonesian translation and a brief grammar correction only if needed.'
+      );
+
+      sessionActive = true;
+
+      addMessage(
+        'AI',
+        data.reply_en,
+        data.translation_id,
+        data.correction_id
+      );
+
+      lastAiText = data.reply_en;
+
+      speak(lastAiText);
+
+      setStatus('Sesi latihan aktif · Gemini AI terhubung');
+
+    } catch (error) {
+      sessionActive = false;
+
+      showWelcome(
+        'Belum berhasil terhubung ke AI. Silakan coba lagi.'
+      );
+
+      setStatus('Error: ' + error.message);
+
+      console.error(error);
+
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function replyTo(text) {
+    if (!text || busy) return;
+
+    if (!sessionActive) {
+      await startSession();
+
+      if (!sessionActive) return;
+    }
+
+    setBusy(true);
+
+    synth?.cancel();
+
+    addMessage(
+      'You',
+      text,
+      await translate(text)
+    );
+
+    setStatus('Gemini sedang menyusun jawaban...');
+
+    try {
+      const data = await askGemini(text);
+
+      addMessage(
+        'AI',
+        data.reply_en,
+        data.translation_id,
+        data.correction_id
+      );
+
+      lastAiText = data.reply_en;
+
+      speak(lastAiText);
+
+      setStatus(
+        'Sesi latihan aktif · Silakan lanjutkan'
+      );
+
+    } catch (error) {
+      addMessage(
+        'AI',
+        'Sorry, I cannot respond right now. Please try again.',
+        'Maaf, AI belum bisa menjawab sekarang. Silakan coba lagi.',
+        error.message
+      );
+
+      setStatus('Error: ' + error.message);
+
+      console.error(error);
+
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startListening() {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert(
+        'Browser belum mendukung Speech Recognition. Gunakan Google Chrome terbaru.'
+      );
+
+      return;
+    }
+
+    if (busy) return;
+
+    recognition = new SpeechRecognition();
+
+    recognition.lang = $('voice').value;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      listening = true;
+
+      $('micBtn').classList.add('active');
+      $('micBtn').textContent = '🔴';
+
+      setStatus('Mendengarkan... silakan berbicara');
+    };
+
+    recognition.onresult = event => {
+      const spokenText =
+        event.results[0][0].transcript;
+
+      $('textInput').value = spokenText;
+
+      replyTo(spokenText);
+    };
+
+    recognition.onerror = event => {
+      setStatus('Mikrofon: ' + event.error);
+    };
+
+    recognition.onend = () => {
+      listening = false;
+
+      $('micBtn').classList.remove('active');
+      $('micBtn').textContent = '🎙️';
+
+      if (!busy) {
+        setStatus(
+          sessionActive
+            ? 'Sesi latihan aktif · Siap'
+            : 'Belum memulai sesi'
+        );
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (error) {
+      setStatus('Mikrofon sedang digunakan');
+    }
+  }
+
+  $('startBtn').addEventListener(
+    'click',
+    startSession
   );
 
-  speak(line);
-}
+  $('micBtn').addEventListener('click', () => {
+    if (listening && recognition) {
+      recognition.stop();
+    } else {
+      startListening();
+    }
+  });
 
-async function replyTo(text) {
+  $('sendBtn').addEventListener('click', async () => {
+    const text = $('textInput').value.trim();
 
-  addMessage('You',text,await translate(text,'en','id'));
+    if (!text || busy) return;
 
-  const t = text.toLowerCase();
+    $('textInput').value = '';
 
-  let answer;
+    await replyTo(text);
+  });
 
-  if (/hello|hi|hey/.test(t)) {
-    answer = "Hello! It's nice to meet you. Where are you from?";
-  }
-  else if (/my name is|i am|i'm/.test(t)) {
-    answer = "Nice to meet you! What do you do for work?";
-  }
-  else if (/palembang|indonesia/.test(t)) {
-    answer = "That sounds interesting! What do you like most about your city?";
-  }
-  else if (/pegadaian|work|job|cashier/.test(t)) {
-    answer = "That's great! What is your main responsibility at work?";
-  }
-  else if (/thank/.test(t)) {
-    answer = "You're welcome! Can you tell me a little more?";
-  }
-  else {
-    answer = "Good try! Could you tell me more about that? Try to answer in one or two complete English sentences.";
-  }
+  $('textInput').addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      $('sendBtn').click();
+    }
+  });
 
-  lastAiText = answer;
+  $('repeatBtn').addEventListener('click', () => {
+    if (lastAiText) {
+      speak(lastAiText);
+    }
+  });
 
-  addMessage(
-    'AI',
-    answer,
-    await translate(answer,'en','id')
-  );
+  $('stopBtn').addEventListener('click', () => {
+    synth?.cancel();
 
-  speak(answer);
-}
+    if (recognition && listening) {
+      recognition.stop();
+    }
+  });
 
-function startListening() {
+  $('clearBtn').addEventListener('click', () => {
+    synth?.cancel();
 
-  const SR = window.SpeechRecognition ||
-             window.webkitSpeechRecognition;
+    if (recognition && listening) {
+      recognition.stop();
+    }
 
-  if (!SR) {
-    alert('Browser belum mendukung Speech Recognition. Gunakan Google Chrome terbaru.');
-    return;
-  }
+    previousId = null;
+    sessionActive = false;
+    lastAiText = '';
 
-  recognition = new SR();
+    showWelcome(
+      'Percakapan dibersihkan. Tekan Mulai Latihan untuk memulai sesi baru.'
+    );
 
-  recognition.lang = 'en-US';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
+    $('sessionLabel').textContent =
+      'Pilih topik, lalu mulai berbicara';
 
-  recognition.onstart = () => {
+    setStatus('Belum memulai sesi');
+  });
 
-    running = true;
+  $('helpBtn').addEventListener('click', async () => {
+    if (busy) return;
 
-    $('micBtn').classList.add('active');
-    $('micBtn').textContent = '🔴';
+    await replyTo(
+      'Please help me answer your last question. ' +
+      'Give me one simple example answer suitable for my English level, ' +
+      'and explain it in Indonesian.'
+    );
+  });
 
-    setStatus('Mendengarkan... silakan berbicara');
-  };
-
-  recognition.onresult = e => {
-
-    const text = e.results[0][0].transcript;
-
-    $('textInput').value = text;
-
-    replyTo(text);
-  };
-
-  recognition.onerror = e => {
-    setStatus('Mikrofon: ' + e.error);
-  };
-
-  recognition.onend = () => {
-
-    running = false;
-
-    $('micBtn').classList.remove('active');
-    $('micBtn').textContent = '🎙️';
-
-    setStatus('Siap mendengarkan');
-  };
-
-  try {
-    recognition.start();
-  } catch(e) {
-    setStatus('Mikrofon sedang digunakan');
-  }
-}
-
-$('startBtn').addEventListener('click',() => {
-
-  $('sessionLabel').textContent =
-    $('level').value + ' · ' + $('topic').value;
-
-  running = true;
-
-  setStatus('Sesi latihan aktif');
-
-  openingLine();
-});
-
-$('micBtn').addEventListener('click',() => {
-
-  if (recognition && running) {
-    recognition.stop();
-    return;
-  }
-
-  startListening();
-});
-
-$('sendBtn').addEventListener('click',() => {
-
-  const v = $('textInput').value.trim();
-
-  if (!v) return;
-
-  $('textInput').value = '';
-
-  replyTo(v);
-});
-
-$('textInput').addEventListener('keydown',e => {
-
-  if (e.key === 'Enter') {
-    $('sendBtn').click();
-  }
-
-});
-
-$('repeatBtn').addEventListener('click',() => {
-
-  if (lastAiText) speak(lastAiText);
-
-});
-
-$('stopBtn').addEventListener('click',() => {
-
-  synth?.cancel();
-
-  if (recognition) recognition.stop();
-
-});
-
-$('clearBtn').addEventListener('click',() => {
-
-  messages.innerHTML =
-    '<div class="welcome" id="welcome">Percakapan dibersihkan. Tekan Mulai Latihan untuk memulai lagi.</div>';
-
-  lastAiText = '';
-
-});
-
-$('helpBtn').addEventListener('click',() => {
-
-  const help = "You can say: I am from Palembang, Indonesia.";
-
-  addMessage(
-    'AI',
-    help,
-    'Kamu bisa mengatakan: Saya berasal dari Palembang, Indonesia.'
-  );
-
-  lastAiText = help;
-
-  speak(help);
-
-});
+  $('translation').addEventListener('change', () => {
+    // Pengaturan terjemahan berlaku untuk pesan berikutnya.
+  });
 
 })();
 </script>
