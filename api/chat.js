@@ -60,7 +60,7 @@ Do not put the JSON inside Markdown code fences.
 `;
 
     const payload = {
-      model: "gemini-3.8-flash",
+      model: "gemini-3.7-flash",
       input: message,
       system_instruction: systemInstruction
     };
