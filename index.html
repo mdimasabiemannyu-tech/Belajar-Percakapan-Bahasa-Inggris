@@ -22,9 +22,7 @@
   --red:#ff7185;
 }
 
-* {
-  box-sizing:border-box;
-}
+* { box-sizing:border-box; }
 
 body {
   margin:0;
@@ -35,18 +33,9 @@ body {
   font:15px/1.5 system-ui,sans-serif;
 }
 
-button,input,select {
-  font:inherit;
-}
-
-button {
-  cursor:pointer;
-}
-
-button:disabled {
-  opacity:.55;
-  cursor:not-allowed;
-}
+button,input,select { font:inherit; }
+button { cursor:pointer; }
+button:disabled { opacity:.55; cursor:not-allowed; }
 
 .app {
   max-width:1100px;
@@ -81,15 +70,8 @@ button:disabled {
   color:#081326;
 }
 
-h1 {
-  font-size:21px;
-  margin:0;
-}
-
-h2 {
-  font-size:15px;
-  margin:0 0 13px;
-}
+h1 { font-size:21px; margin:0; }
+h2 { font-size:15px; margin:0 0 13px; }
 
 .sub {
   color:var(--muted);
@@ -118,9 +100,7 @@ h2 {
   box-shadow:0 16px 45px #0003;
 }
 
-.field {
-  margin:13px 0;
-}
+.field { margin:13px 0; }
 
 .field label {
   display:block;
@@ -149,9 +129,7 @@ select {
   transition:.2s;
 }
 
-.primary:hover {
-  filter:brightness(1.1);
-}
+.primary:hover { filter:brightness(1.1); }
 
 .secondary {
   background:var(--panel2);
@@ -289,9 +267,7 @@ select {
   outline:none;
 }
 
-.inputrow input:focus {
-  border-color:var(--blue);
-}
+.inputrow input:focus { border-color:var(--blue); }
 
 .mic {
   width:48px;
@@ -316,12 +292,6 @@ select {
   padding:8px 11px;
 }
 
-.typing {
-  color:var(--muted);
-  font-size:12px;
-  padding:5px 3px;
-}
-
 .footer {
   text-align:center;
   color:#71809e;
@@ -330,44 +300,18 @@ select {
 }
 
 @media(max-width:760px) {
-  .layout {
-    grid-template-columns:1fr;
-  }
-
-  .chat {
-    min-height:65vh;
-  }
-
-  .messages {
-    min-height:38vh;
-    max-height:48vh;
-  }
-
-  .pill {
-    display:none;
-  }
-
-  .app {
-    padding:15px 12px 30px;
-  }
+  .layout { grid-template-columns:1fr; }
+  .chat { min-height:65vh; }
+  .messages { min-height:38vh; max-height:48vh; }
+  .pill { display:none; }
+  .app { padding:15px 12px 30px; }
 }
 
 @media(max-width:420px) {
-  .inputrow {
-    flex-wrap:wrap;
-  }
-
-  .inputrow input {
-    flex-basis:100%;
-  }
-
-  .inputrow button {
-    flex:1;
-  }
-
-  .msg {
-    max-width:95%;
-  }
+  .inputrow { flex-wrap:wrap; }
+  .inputrow input { flex-basis:100%; }
+  .inputrow button { flex:1; }
+  .msg { max-width:95%; }
 }
 </style>
 </head>
@@ -385,14 +329,12 @@ select {
       </div>
     </div>
   </div>
-
   <div class="pill">🎙️ AI Voice Conversation Practice</div>
 </header>
 
 <section class="layout">
 
 <aside class="panel">
-
   <h2>Pengaturan Belajar</h2>
 
   <div class="field">
@@ -461,7 +403,6 @@ select {
       4. Latihan setiap hari.
     </p>
   </div>
-
 </aside>
 
 <section class="panel chat">
@@ -473,10 +414,7 @@ select {
         Pilih topik, lalu mulai berbicara
       </div>
     </div>
-
-    <button class="secondary" id="clearBtn">
-      Bersihkan
-    </button>
+    <button class="secondary" id="clearBtn">Bersihkan</button>
   </div>
 
   <div class="messages" id="messages">
@@ -490,46 +428,26 @@ select {
   </div>
 
   <div class="composer">
-
     <div class="inputrow">
-
       <input
         id="textInput"
         type="text"
         placeholder="Ketik kalimat bahasa Inggris..."
         autocomplete="off"
       >
-
-      <button class="primary" id="sendBtn">
-        Kirim
-      </button>
-
-      <button class="secondary mic" id="micBtn" title="Gunakan mikrofon">
-        🎙️
-      </button>
-
+      <button class="primary" id="sendBtn">Kirim</button>
+      <button class="secondary mic" id="micBtn" title="Gunakan mikrofon">🎙️</button>
     </div>
 
     <div class="controls">
-
-      <button class="secondary" id="repeatBtn">
-        🔊 Ulangi Suara AI
-      </button>
-
-      <button class="secondary" id="stopBtn">
-        ⏹ Hentikan Suara
-      </button>
-
-      <button class="secondary" id="helpBtn">
-        💡 Bantu Saya Menjawab
-      </button>
-
+      <button class="secondary" id="repeatBtn">🔊 Ulangi Suara AI</button>
+      <button class="secondary" id="stopBtn">⏹ Hentikan Suara</button>
+      <button class="secondary" id="helpBtn">💡 Bantu Saya Menjawab</button>
     </div>
 
     <div class="note">
       Powered by Gemini AI · Terjemahan Indonesia · Grammar Correction
     </div>
-
   </div>
 
 </section>
@@ -546,7 +464,6 @@ select {
   'use strict';
 
   const $ = id => document.getElementById(id);
-
   const messages = $('messages');
 
   let recognition = null;
@@ -568,30 +485,22 @@ select {
 
   function setBusy(value) {
     busy = value;
-
     $('sendBtn').disabled = value;
     $('startBtn').disabled = value;
     $('helpBtn').disabled = value;
 
-    $('sendBtn').textContent = value
-      ? 'Tunggu...'
-      : 'Kirim';
+    $('sendBtn').textContent = value ? 'Tunggu...' : 'Kirim';
   }
 
   function addMessage(role, english, indo = '', correction = '') {
     $('welcome')?.remove();
 
     const node = document.createElement('div');
-
-    node.className =
-      'msg ' + (role === 'You' ? 'user' : 'ai');
+    node.className = 'msg ' + (role === 'You' ? 'user' : 'ai');
 
     const who = document.createElement('div');
     who.className = 'who';
-
-    who.textContent = role === 'You'
-      ? 'YOU · KAMU'
-      : 'AI ENGLISH PARTNER';
+    who.textContent = role === 'You' ? 'YOU · KAMU' : 'AI ENGLISH PARTNER';
 
     const en = document.createElement('div');
     en.textContent = english || '';
@@ -600,24 +509,19 @@ select {
 
     if (indo && $('translation').value === 'yes') {
       const tr = document.createElement('div');
-
       tr.className = 'translation';
       tr.textContent = '🇮🇩 ' + indo;
-
       node.append(tr);
     }
 
     if (correction) {
       const fix = document.createElement('div');
-
       fix.className = 'correction';
       fix.textContent = '✍️ ' + correction;
-
       node.append(fix);
     }
 
     messages.append(node);
-
     messages.scrollTop = messages.scrollHeight;
   }
 
@@ -625,7 +529,6 @@ select {
     messages.innerHTML = '';
 
     const welcome = document.createElement('div');
-
     welcome.className = 'welcome';
     welcome.id = 'welcome';
     welcome.textContent = text;
@@ -647,7 +550,6 @@ select {
       if (!response.ok) return '';
 
       const data = await response.json();
-
       return data.responseData?.translatedText || '';
 
     } catch (error) {
@@ -662,7 +564,6 @@ select {
     synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-
     utterance.lang = $('voice').value;
     utterance.rate = 0.92;
     utterance.pitch = 1;
@@ -670,60 +571,82 @@ select {
     synth.speak(utterance);
   }
 
+  // FUNGSI GEMINI DENGAN PENANGANAN ERROR DAN TIMEOUT
   async function askGemini(message) {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
+    const controller = new AbortController();
 
-      headers: {
-        'Content-Type': 'application/json'
-      },
-
-      body: JSON.stringify({
-        message: message,
-        previousId: previousId,
-        level: $('level').value,
-        topic: $('topic').value
-      })
-    });
-
-    let data;
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 60000);
 
     try {
-      data = await response.json();
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: message,
+          previousId: previousId,
+          level: $('level').value,
+          topic: $('topic').value
+        }),
+        signal: controller.signal
+      });
+
+      const responseText = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch (error) {
+        console.error('Respons server bukan JSON:', responseText);
+
+        throw new Error(
+          `Server mengirim respons bukan JSON (HTTP ${response.status}). Periksa Logs Vercel.`
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || `Server error HTTP ${response.status}`
+        );
+      }
+
+      if (!data.id) {
+        throw new Error(
+          'ID percakapan tidak ditemukan. Periksa backend api/chat.js.'
+        );
+      }
+
+      if (!data.reply_en) {
+        throw new Error(
+          'Gemini tidak memberikan jawaban bahasa Inggris.'
+        );
+      }
+
+      previousId = data.id;
+      return data;
+
     } catch (error) {
-      throw new Error(
-        'Server tidak memberikan respons JSON. Periksa deployment Vercel.'
-      );
+      if (error.name === 'AbortError') {
+        throw new Error(
+          'Permintaan melebihi 60 detik. Gemini atau server Vercel terlalu lambat.'
+        );
+      }
+
+      throw error;
+
+    } finally {
+      clearTimeout(timeout);
     }
-
-    if (!response.ok) {
-      throw new Error(
-        data.error || 'Gagal menghubungi Gemini AI.'
-      );
-    }
-
-    if (!data.id) {
-      throw new Error(
-        'ID percakapan tidak ditemukan. Periksa backend api/chat.js.'
-      );
-    }
-
-    if (!data.reply_en) {
-      throw new Error(
-        'Gemini tidak memberikan jawaban bahasa Inggris.'
-      );
-    }
-
-    previousId = data.id;
-
-    return data;
   }
 
   async function startSession() {
     if (busy) return;
 
     setBusy(true);
-
     synth?.cancel();
 
     previousId = null;
@@ -759,7 +682,6 @@ select {
       );
 
       lastAiText = data.reply_en;
-
       speak(lastAiText);
 
       setStatus('Sesi latihan aktif · Gemini AI terhubung');
@@ -772,7 +694,6 @@ select {
       );
 
       setStatus('Error: ' + error.message);
-
       console.error(error);
 
     } finally {
@@ -785,12 +706,10 @@ select {
 
     if (!sessionActive) {
       await startSession();
-
       if (!sessionActive) return;
     }
 
     setBusy(true);
-
     synth?.cancel();
 
     addMessage(
@@ -812,12 +731,9 @@ select {
       );
 
       lastAiText = data.reply_en;
-
       speak(lastAiText);
 
-      setStatus(
-        'Sesi latihan aktif · Silakan lanjutkan'
-      );
+      setStatus('Sesi latihan aktif · Silakan lanjutkan');
 
     } catch (error) {
       addMessage(
@@ -828,7 +744,6 @@ select {
       );
 
       setStatus('Error: ' + error.message);
-
       console.error(error);
 
     } finally {
@@ -845,33 +760,26 @@ select {
       alert(
         'Browser belum mendukung Speech Recognition. Gunakan Google Chrome terbaru.'
       );
-
       return;
     }
 
     if (busy) return;
 
     recognition = new SpeechRecognition();
-
     recognition.lang = $('voice').value;
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
       listening = true;
-
       $('micBtn').classList.add('active');
       $('micBtn').textContent = '🔴';
-
       setStatus('Mendengarkan... silakan berbicara');
     };
 
     recognition.onresult = event => {
-      const spokenText =
-        event.results[0][0].transcript;
-
+      const spokenText = event.results[0][0].transcript;
       $('textInput').value = spokenText;
-
       replyTo(spokenText);
     };
 
@@ -881,7 +789,6 @@ select {
 
     recognition.onend = () => {
       listening = false;
-
       $('micBtn').classList.remove('active');
       $('micBtn').textContent = '🎙️';
 
@@ -901,10 +808,7 @@ select {
     }
   }
 
-  $('startBtn').addEventListener(
-    'click',
-    startSession
-  );
+  $('startBtn').addEventListener('click', startSession);
 
   $('micBtn').addEventListener('click', () => {
     if (listening && recognition) {
@@ -920,7 +824,6 @@ select {
     if (!text || busy) return;
 
     $('textInput').value = '';
-
     await replyTo(text);
   });
 
@@ -932,9 +835,7 @@ select {
   });
 
   $('repeatBtn').addEventListener('click', () => {
-    if (lastAiText) {
-      speak(lastAiText);
-    }
+    if (lastAiText) speak(lastAiText);
   });
 
   $('stopBtn').addEventListener('click', () => {
@@ -974,10 +875,6 @@ select {
       'Give me one simple example answer suitable for my English level, ' +
       'and explain it in Indonesian.'
     );
-  });
-
-  $('translation').addEventListener('change', () => {
-    // Pengaturan terjemahan berlaku untuk pesan berikutnya.
   });
 
 })();
