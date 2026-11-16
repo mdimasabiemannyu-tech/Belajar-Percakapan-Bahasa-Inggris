@@ -60,11 +60,13 @@ Do not put the JSON inside Markdown code fences.
 `;
 
     const payload = {
-      model: "gemini-3.7-flash",
-      input: message,
-      system_instruction: systemInstruction
-    };
-
+  model: "gemini-3.8-flash",
+  input: message,
+  system_instruction: systemInstruction,
+  generation_config: {
+    thinking_level: "low"
+  }
+};
     if (previousId) {
       payload.previous_interaction_id = previousId;
     }
